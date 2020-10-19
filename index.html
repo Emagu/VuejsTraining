@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>CodePen - Todo Demo Template</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.0/css/font-awesome.min.css" integrity="sha512-FEQLazq9ecqLN5T6wWq26hCZf7kPqUbFC9vsHNbXMJtSZZWAcbJspT+/NEAQkBfFReZ8r9QlA9JHaAuo28MTJA==" crossorigin="anonymous" />
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.css'><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <template id="messageTemplate">
+    <li class="list-group-item">
+      <div class="d-flex">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input">
+          <label class="form-check-label" v-bind:class="{completed: ready}">
+            {{name}}
+          </label>
+        </div>
+        <div class="ml-auto">
+          <button type="button" class="close" aria-label="Close">
+            <span aria-hidden="true" v-on:click="remove">&times;</span>
+          </button>
+          <button type="button" class="close ">
+            <span class="fa fa-check-circle" v-on:click="compelete" v-if="ready==false" ></span>
+          </button>
+        </div>
+      </div>
+    </li>
+  </template>
+  <div id="app" class="container my-3">
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">待辦事項</span>
+      </div>
+      <input type="text" class="form-control" placeholder="準備要做的任務" v-model="preAdd.name">
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="button" v-on:click="insert">新增</button>
+      </div>
+    </div>
+    <div class="card text-center">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item">
+            <a class="nav-link" v-bind:class="{active: activeTag=='全部' }"  v-on:click="change">全部</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " v-bind:class="{active: activeTag=='進行中' }" v-on:click="change">進行中</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" v-bind:class="{active: activeTag=='已完成' }" v-on:click="change">已完成</a>
+          </li>
+        </ul>
+      </div>
+      <ul class="list-group list-group-flush text-left">
+        <div is="message" v-for="item,index in messages" v-bind="item" v-on:remove="remove" v-on:compelete="compelete(index)"></div>
+      </ul>
+      <div class="card-footer d-flex justify-content-between">
+        <span>還有 {{messages.length}} 筆任務</span>
+        <button class="btn btn-primary" type="button" v-on:click="clearAll">清除所有任務</button>
+      </div>
+    </div>
+  </div>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.js'></script>
+  <script>
+    Vue.component('message', {
+      props:{
+        no: Number,
+        name: String,
+        ready: Boolean
+      },
+      template: '#messageTemplate',
+      methods:{
+        compelete(){
+          this.$emit("compelete");
+        },
+        remove(){
+          this.$emit("remove", {
+            no: this.no,
+            name: this.name,
+            ready: this.ready
+          });
+        }
+      }
+    });
+    var app = new Vue({
+      el: '#app',
+      data: {
+        messageDatas:[
+          {no: 1, name: "test", ready: false},
+          {no: 2, name: "test1", ready: true}
+        ],
+        messages: [],
+        ai_count: 3,
+        preAdd:{
+          no: 3,
+          name: "",
+          ready: false
+        },
+        activeTag: '全部'
+      },
+      mounted(){
+        this.render();
+      },
+      methods:{
+        compelete(index){
+          this.messageDatas[index].ready = true;
+          this.render();
+        },
+        clearAll(){
+          var indexs = [];
+          this.messages.forEach((item)=>{
+            indexs.push(item.no);
+          });
+          var result = [];
+          this.messageDatas.forEach((item)=>{
+            if(indexs.indexOf(item.no) == -1){
+              result.push(item);
+            }
+          });
+          this.messageDatas = result;
+          this.render();
+        },
+        remove(obj){
+          var removeIndex = -1;
+          this.messageDatas.forEach((element, index) => {
+            if(element.no == obj.no){
+              removeIndex = index;
+            }
+          });
+          if(removeIndex != -1){
+            this.messageDatas.splice(removeIndex,1);
+          }
+          this.render();
+        },
+        insert(){
+          if(this.preAdd.name != "")
+          {
+            this.messageDatas.push(
+              {
+                no: this.ai_count++,
+                name: this.preAdd.name,
+                ready: false
+              }
+            )
+            this.render();
+          }
+        },
+        change(event){
+          this.activeTag = event.target.innerHTML;
+          this.render();
+        },
+        render(){
+          var temp = [];
+          switch(this.activeTag)
+          {
+            case "全部":
+              temp = this.messageDatas;
+              break;
+            case "進行中":
+              this.messageDatas.forEach((element, index) => {
+                if(!element.ready){
+                  temp.push(element);
+                }
+              });
+            break;
+            case "已完成":
+              this.messageDatas.forEach((element, index) => {
+                if(element.ready){
+                  temp.push(element);
+                }
+              });
+            break;
+          }
+          this.messages = temp;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
